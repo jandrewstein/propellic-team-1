@@ -580,6 +580,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const saved = localStorage.getItem('pp_apikey');
   if (saved) document.getElementById('f_apikey').value = saved;
   buildForm();
+  if (location.protocol === 'file:') {
+    document.getElementById('analyzeStatus').innerHTML =
+      '⚠️ <strong>Running from a local file — transcript analysis won\'t work here.</strong> ' +
+      'Open via <a href="https://jandrewstein.github.io/propellic-team-1/martech-scope.html" target="_blank" style="color:var(--cyan)">GitHub Pages</a> or a local server to use this feature.';
+  }
 });
 
 // ═══════════════════════════════════════════════════════════
