@@ -273,18 +273,53 @@
         </div>
         <div class="transcript-body" id="transcriptBody">
           <p class="status" style="margin-bottom:0.75rem">Paste a Zoom/Otter.ai transcript (WEBVTT or plain text). Claude will auto-fill the form and flag what's still unclear.</p>
-          <div class="api-row">
-            <input type="password" id="f_apikey" placeholder="Anthropic API key (sk-ant-...)" />
-            <button class="btn btn-ghost btn-sm" onclick="saveKey()">Save Key</button>
+          <!-- Mode tabs -->
+          <div style="display:flex;gap:0;border:1px solid var(--border);border-radius:6px;overflow:hidden;margin-bottom:0.9rem;width:fit-content">
+            <button class="mode-btn active" id="tabApi" onclick="setAnalyzeMode('api')" style="border-radius:0">API Key</button>
+            <button class="mode-btn" id="tabManual" onclick="setAnalyzeMode('manual')" style="border-radius:0">Use Claude.ai</button>
           </div>
-          <div class="field">
-            <label class="field-label">Transcript</label>
-            <textarea id="f_transcript" style="min-height:160px;font-family:monospace;font-size:0.78rem" placeholder="WEBVTT&#10;&#10;00:00:08.000 --> 00:00:10.000&#10;John: We have GA4 and use FareHarbor for bookings..."></textarea>
+
+          <!-- API mode -->
+          <div id="panelApi">
+            <div class="api-row">
+              <input type="password" id="f_apikey" placeholder="Anthropic API key (sk-ant-...)" />
+              <button class="btn btn-ghost btn-sm" onclick="saveKey()">Save Key</button>
+            </div>
+            <div class="field">
+              <label class="field-label">Transcript</label>
+              <textarea id="f_transcript" style="min-height:140px;font-family:monospace;font-size:0.78rem" placeholder="WEBVTT&#10;&#10;00:00:08.000 --> 00:00:10.000&#10;John: We have GA4 and use FareHarbor for bookings..."></textarea>
+            </div>
+            <div style="display:flex;align-items:center;gap:0.75rem">
+              <button class="btn btn-blue btn-sm" id="analyzeBtn" onclick="runAnalysis()">Analyze Transcript</button>
+              <span class="status" style="margin:0">Calls Claude API directly.</span>
+            </div>
           </div>
-          <div style="display:flex;align-items:center;gap:0.75rem">
-            <button class="btn btn-blue btn-sm" id="analyzeBtn" onclick="runAnalysis()">Analyze Transcript</button>
-            <span class="status" style="margin:0">Claude reads the transcript and auto-fills the form below.</span>
+
+          <!-- Manual / Claude.ai mode -->
+          <div id="panelManual" style="display:none">
+            <p class="status" style="margin-bottom:0.75rem">No API key? Paste your transcript, generate a prompt, copy it into <strong style="color:var(--text)">claude.ai</strong>, then paste Claude's response back here.</p>
+            <div class="field">
+              <label class="field-label">Transcript</label>
+              <textarea id="f_transcript_manual" style="min-height:120px;font-family:monospace;font-size:0.78rem" placeholder="Paste transcript here..."></textarea>
+            </div>
+            <button class="btn btn-ghost btn-sm" onclick="generateManualPrompt()" style="margin-bottom:0.75rem">1 · Generate Prompt</button>
+            <div id="manualPromptWrap" style="display:none;margin-bottom:0.75rem">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.35rem">
+                <label class="field-label" style="margin:0">Copy this prompt → paste into Claude.ai</label>
+                <div style="display:flex;gap:0.5rem">
+                  <button class="btn btn-ghost btn-sm" onclick="copyPrompt()">📋 Copy Prompt</button>
+                  <a href="https://claude.ai/new" target="_blank" class="btn btn-blue btn-sm">2 · Open Claude.ai ↗</a>
+                </div>
+              </div>
+              <textarea id="manualPromptBox" style="min-height:100px;font-family:monospace;font-size:0.72rem;color:var(--muted)" readonly></textarea>
+            </div>
+            <div id="manualResponseWrap" style="display:none">
+              <label class="field-label">3 · Paste Claude's response here</label>
+              <textarea id="manualResponseBox" style="min-height:100px;font-family:monospace;font-size:0.72rem" placeholder='{"answers":{"q1":["Fix something broken..."],...},"gaps":[...]}'></textarea>
+              <button class="btn btn-green btn-sm" style="margin-top:0.5rem" onclick="applyManualResponse()">Apply to Form →</button>
+            </div>
           </div>
+
           <div class="status" id="analyzeStatus"></div>
         </div>
       </div>
@@ -744,9 +779,84 @@ function toggleTranscript() {
   document.getElementById('tToggleHint').textContent = transcriptOpen ? 'Collapse ▴' : 'Expand ▾';
 }
 
+function setAnalyzeMode(m) {
+  document.getElementById('tabApi').classList.toggle('active', m === 'api');
+  document.getElementById('tabManual').classList.toggle('active', m === 'manual');
+  document.getElementById('panelApi').style.display = m === 'api' ? 'block' : 'none';
+  document.getElementById('panelManual').style.display = m === 'manual' ? 'block' : 'none';
+  document.getElementById('analyzeStatus').textContent = '';
+}
+
 function saveKey() {
   const k = document.getElementById('f_apikey').value.trim();
   if (k) { localStorage.setItem('pp_apikey', k); toast('API key saved'); }
+}
+
+function buildAnalysisPrompt(transcriptText) {
+  const qList = QS.map((q, i) => {
+    let opts;
+    if (q.groups) opts = q.groups.flatMap(g => g.opts.map(o => `  - ${o.l}`)).join('\n');
+    else opts = q.opts.map(o => `  - ${o.l}`).join('\n');
+    return `Q${i+1} [${q.id}]: ${q.internal}\nOptions:\n${opts}`;
+  }).join('\n\n');
+
+  return `You are analyzing a MarTech discovery call transcript to fill out a 12-question intake form.
+
+QUESTIONS:
+${qList}
+
+TRANSCRIPT:
+${transcriptText}
+
+Return ONLY valid JSON. Match option labels exactly as written above. Only include questions with clear evidence from the transcript.
+
+{
+  "answers": {
+    "q1": ["exact option label"],
+    "q3": ["exact option label 1", "exact option label 2"]
+  },
+  "gaps": [
+    {
+      "questionId": "q5",
+      "questionText": "...",
+      "whyMissing": "Not discussed in the call",
+      "suggestedFollowup": "Specific question to ask the client"
+    }
+  ],
+  "notes": "1-2 sentence summary of the client MarTech situation from the transcript"
+}`;
+}
+
+function generateManualPrompt() {
+  const raw = document.getElementById('f_transcript_manual').value.trim();
+  if (!raw) { document.getElementById('analyzeStatus').textContent = '⚠ Paste a transcript first.'; return; }
+  const prompt = buildAnalysisPrompt(stripVTT(raw).substring(0, 14000));
+  document.getElementById('manualPromptBox').value = prompt;
+  document.getElementById('manualPromptWrap').style.display = 'block';
+  document.getElementById('manualResponseWrap').style.display = 'block';
+}
+
+function copyPrompt() {
+  const txt = document.getElementById('manualPromptBox').value;
+  navigator.clipboard.writeText(txt).then(() => toast('Prompt copied — paste into Claude.ai!'));
+}
+
+function applyManualResponse() {
+  const raw = document.getElementById('manualResponseBox').value.trim();
+  const statusEl = document.getElementById('analyzeStatus');
+  if (!raw) { statusEl.textContent = '⚠ Paste Claude\'s response first.'; return; }
+  try {
+    const match = raw.match(/\{[\s\S]*\}/);
+    if (!match) throw new Error('No JSON found — make sure you copied Claude\'s full response.');
+    const result = JSON.parse(match[0]);
+    applyAIAnswers(result);
+    gaps = result.gaps || [];
+    updateGapsSide();
+    const filled = Object.keys(result.answers || {}).length;
+    statusEl.innerHTML = `✅ <strong>${filled} questions auto-filled</strong>, <strong>${gaps.length} gaps flagged</strong>.${result.notes ? `<br><em style="color:var(--muted)">${result.notes}</em>` : ''}`;
+  } catch (e) {
+    statusEl.textContent = `❌ ${e.message}`;
+  }
 }
 
 function stripVTT(txt) {
@@ -769,39 +879,7 @@ async function runAnalysis() {
   statusEl.textContent = 'Sending to Claude…';
 
   const transcript = stripVTT(raw).substring(0, 14000);
-
-  const qList = QS.map((q, i) => {
-    let opts;
-    if (q.groups) opts = q.groups.flatMap(g => g.opts.map(o => `  - ${o.l}`)).join('\n');
-    else opts = q.opts.map(o => `  - ${o.l}`).join('\n');
-    return `Q${i+1} [${q.id}]: ${q.internal}\nOptions:\n${opts}`;
-  }).join('\n\n');
-
-  const prompt = `You are analyzing a MarTech discovery call transcript to fill out a 12-question intake form.
-
-QUESTIONS:
-${qList}
-
-TRANSCRIPT:
-${transcript}
-
-Return ONLY valid JSON. Match option labels exactly as written above. Only include questions with clear evidence from the transcript.
-
-{
-  "answers": {
-    "q1": ["exact option label"],
-    "q3": ["exact option label 1", "exact option label 2"]
-  },
-  "gaps": [
-    {
-      "questionId": "q5",
-      "questionText": "...",
-      "whyMissing": "Not discussed in the call",
-      "suggestedFollowup": "Specific question to ask the client"
-    }
-  ],
-  "notes": "1-2 sentence summary of the client MarTech situation from the transcript"
-}`;
+  const prompt = buildAnalysisPrompt(transcript);
 
   try {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
