@@ -1,0 +1,1054 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Propellic · MarTech Scope Tool</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --surface2: #263347;
+      --border: #334155;
+      --accent: #3b82f6;
+      --cyan: #06b6d4;
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --green: #10b981;
+      --amber: #f59e0b;
+      --red: #ef4444;
+      --r: 8px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+    /* ── Header ── */
+    header {
+      background: linear-gradient(135deg, #0d1b2e 0%, #1a3a5c 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 0.875rem 2rem;
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 50;
+    }
+    .logo { font-size: 1.1rem; font-weight: 700; letter-spacing: -0.02em; }
+    .logo em { color: var(--cyan); font-style: normal; }
+    .mode-pill {
+      display: flex; gap: 0; border: 1px solid var(--border); border-radius: 999px; overflow: hidden;
+    }
+    .mode-btn {
+      padding: 0.35rem 1rem; font-size: 0.78rem; font-weight: 600; cursor: pointer;
+      background: transparent; border: none; color: var(--muted); transition: all 0.15s;
+    }
+    .mode-btn.active { background: var(--cyan); color: #0f172a; }
+
+    /* ── Progress ── */
+    .progress {
+      background: var(--surface); border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center; gap: 0; padding: 1rem 2rem;
+    }
+    .prog-step { display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; color: var(--muted); }
+    .prog-step.active { color: var(--cyan); }
+    .prog-step.done { color: var(--green); }
+    .prog-num {
+      width: 26px; height: 26px; border-radius: 50%; background: var(--surface2);
+      border: 2px solid var(--border); display: flex; align-items: center; justify-content: center;
+      font-size: 0.72rem; font-weight: 700;
+    }
+    .prog-step.active .prog-num { border-color: var(--cyan); color: var(--cyan); }
+    .prog-step.done .prog-num { border-color: var(--green); background: var(--green); color: #fff; }
+    .prog-line { width: 50px; height: 1px; background: var(--border); margin: 0 0.5rem; }
+
+    /* ── Layout ── */
+    .page { display: none; }
+    .page.active { display: block; }
+    .wrap { max-width: 1080px; margin: 0 auto; padding: 1.75rem 1.5rem; }
+    .cols { display: grid; grid-template-columns: 1fr 270px; gap: 1.5rem; }
+    .cols.center { grid-template-columns: 1fr; max-width: 680px; }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--r);
+      padding: 1.25rem;
+    }
+    .card + .card { margin-top: 1rem; }
+    .card-h { font-size: 1rem; font-weight: 600; margin-bottom: 1.1rem; }
+
+    /* ── Fields ── */
+    .field { margin-bottom: 1rem; }
+    .field-label { display: block; font-size: 0.78rem; color: var(--muted); margin-bottom: 0.3rem; }
+    .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    input[type=text], input[type=date], input[type=number], input[type=password], select, textarea {
+      width: 100%; background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 6px; color: var(--text); padding: 0.55rem 0.75rem; font-size: 0.875rem;
+    }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: var(--cyan); }
+    textarea { resize: vertical; min-height: 90px; font-family: inherit; }
+
+    /* ── Buttons ── */
+    .btn {
+      display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.55rem 1.1rem;
+      border-radius: 6px; font-size: 0.85rem; font-weight: 600; cursor: pointer; border: none;
+      transition: opacity 0.15s, transform 0.1s; white-space: nowrap;
+    }
+    .btn:hover { opacity: 0.85; }
+    .btn:active { transform: scale(0.97); }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+    .btn-blue { background: var(--accent); color: #fff; }
+    .btn-ghost { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+    .btn-green { background: var(--green); color: #fff; }
+    .btn-sm { padding: 0.35rem 0.85rem; font-size: 0.78rem; }
+    .btn-row { display: flex; justify-content: space-between; align-items: center; margin-top: 1.5rem; gap: 1rem; }
+    .btn-row.right { justify-content: flex-end; }
+
+    /* ── Questions ── */
+    .q-block { margin-bottom: 1.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border); }
+    .q-block:last-child { border-bottom: none; margin-bottom: 0; }
+    .q-num { font-size: 0.68rem; color: var(--cyan); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 0.2rem; }
+    .q-text { font-size: 0.95rem; font-weight: 600; line-height: 1.4; margin-bottom: 0.3rem; }
+    .q-hint { font-size: 0.78rem; color: var(--muted); font-style: italic; margin-bottom: 0.65rem; }
+    .q-group-label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); margin: 0.65rem 0 0.35rem; }
+    .opts { display: flex; flex-direction: column; gap: 0.35rem; }
+    .opt {
+      display: flex; align-items: center; gap: 0.6rem; padding: 0.45rem 0.75rem;
+      background: var(--surface2); border: 1px solid var(--border); border-radius: 6px;
+      cursor: pointer; font-size: 0.85rem; user-select: none; transition: border-color 0.12s, background 0.12s;
+    }
+    .opt:hover { border-color: var(--accent); }
+    .opt.selected { border-color: var(--cyan); background: rgba(6,182,212,0.08); }
+    .opt.ai-filled { border-color: rgba(6,182,212,0.5); background: rgba(6,182,212,0.05); }
+    .opt input { accent-color: var(--cyan); cursor: pointer; flex-shrink: 0; }
+    .opt-ai-badge { margin-left: auto; font-size: 0.65rem; color: var(--cyan); background: rgba(6,182,212,0.15); padding: 0.1rem 0.4rem; border-radius: 999px; }
+
+    /* ── Transcript Panel ── */
+    .transcript-wrap {
+      border: 1px dashed var(--border); border-radius: var(--r); padding: 1rem; margin-bottom: 1.25rem;
+    }
+    .transcript-header { display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
+    .transcript-title { font-size: 0.9rem; font-weight: 600; color: var(--cyan); display: flex; align-items: center; gap: 0.4rem; }
+    .transcript-body { margin-top: 0.9rem; display: none; }
+    .transcript-body.open { display: block; }
+    .api-row { display: flex; gap: 0.5rem; margin-bottom: 0.65rem; }
+    .api-row input { flex: 1; font-family: monospace; font-size: 0.78rem; }
+
+    /* ── Score Sidebar ── */
+    .score-big { text-align: center; padding: 1rem; }
+    .score-n { font-size: 2.75rem; font-weight: 700; line-height: 1; color: var(--cyan); }
+    .score-sub { font-size: 0.72rem; color: var(--muted); margin-top: 0.2rem; }
+    .tier-pill {
+      display: inline-block; padding: 0.3rem 0.9rem; border-radius: 999px; font-size: 0.8rem; font-weight: 600; margin-top: 0.5rem;
+    }
+    .t1 { background: rgba(16,185,129,0.15); color: var(--green); }
+    .t2 { background: rgba(245,158,11,0.15); color: var(--amber); }
+    .t3 { background: rgba(239,68,68,0.15); color: var(--red); }
+    .breakdown-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 0.3rem 0; font-size: 0.78rem; border-bottom: 1px solid var(--border); color: var(--muted);
+    }
+    .breakdown-row:last-child { border-bottom: none; }
+    .breakdown-row .val { color: var(--text); font-weight: 600; }
+
+    /* ── Gaps ── */
+    .gap-item {
+      background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.25);
+      border-radius: 6px; padding: 0.75rem; margin-bottom: 0.5rem; font-size: 0.83rem;
+    }
+    .gap-q { font-weight: 600; color: var(--amber); margin-bottom: 0.2rem; }
+    .gap-why { color: var(--muted); }
+    .gap-ask { color: var(--text); margin-top: 0.3rem; font-style: italic; }
+
+    /* ── Estimate page ── */
+    .est-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1.1rem; }
+    .est-stat { background: var(--surface2); border-radius: 6px; padding: 0.75rem; }
+    .est-stat-label { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+    .est-stat-val { font-size: 1.35rem; font-weight: 700; color: var(--cyan); margin-top: 0.15rem; }
+    .hrs-row { display: flex; align-items: center; gap: 0.5rem; }
+    .hrs-row input[type=number] { width: 75px; }
+    .cost-display { font-size: 1.5rem; font-weight: 700; color: var(--green); }
+    .bullets { list-style: none; }
+    .bullets li { padding: 0.35rem 0; border-bottom: 1px solid var(--border); font-size: 0.85rem; display: flex; gap: 0.5rem; }
+    .bullets li::before { content: "✓"; color: var(--green); flex-shrink: 0; }
+    .bullets li:last-child { border-bottom: none; }
+    .output-box {
+      background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 1rem;
+      font-size: 0.78rem; font-family: monospace; white-space: pre-wrap; color: var(--muted); max-height: 280px; overflow-y: auto;
+    }
+    .override-banner {
+      background: rgba(245,158,11,0.1); border-left: 3px solid var(--amber);
+      padding: 0.6rem 0.9rem; border-radius: 4px; font-size: 0.82rem; margin-bottom: 0.75rem; display: none;
+    }
+
+    /* ── Spinner ── */
+    .spin { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: rot 0.6s linear infinite; }
+    @keyframes rot { to { transform: rotate(360deg); } }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed; bottom: 1.5rem; right: 1.5rem; background: var(--green); color: #fff;
+      padding: 0.65rem 1.1rem; border-radius: var(--r); font-size: 0.85rem; font-weight: 500;
+      opacity: 0; transform: translateY(0.5rem); transition: all 0.25s; pointer-events: none; z-index: 999;
+    }
+    .toast.on { opacity: 1; transform: translateY(0); }
+
+    /* ── Status ── */
+    .status { font-size: 0.8rem; color: var(--muted); margin-top: 0.6rem; line-height: 1.5; }
+
+    /* ── Tier guide ── */
+    .tier-guide { display: flex; flex-direction: column; gap: 0.45rem; }
+    .tg-row { display: flex; align-items: baseline; gap: 0.5rem; font-size: 0.77rem; }
+    .tg-row .tier-pill { font-size: 0.68rem; flex-shrink: 0; }
+
+    /* ── Section divider ── */
+    .section-sep { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 1.1rem 0 0.5rem; padding-bottom: 0.3rem; border-bottom: 1px solid var(--border); }
+
+    @media (max-width: 720px) {
+      .cols { grid-template-columns: 1fr; }
+      .row2 { grid-template-columns: 1fr; }
+      .est-meta { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Propellic <em>·</em> MarTech Scope</div>
+  <div class="mode-pill">
+    <button class="mode-btn active" id="modeInternal" onclick="setMode('internal')">Internal</button>
+    <button class="mode-btn" id="modeClient" onclick="setMode('client')">Client-Facing</button>
+  </div>
+</header>
+
+<div class="progress" id="progressBar">
+  <div class="prog-step active" id="ps1"><div class="prog-num">1</div><span>Client Info</span></div>
+  <div class="prog-line"></div>
+  <div class="prog-step" id="ps2"><div class="prog-num">2</div><span>Intake Form</span></div>
+  <div class="prog-line"></div>
+  <div class="prog-step" id="ps3"><div class="prog-num">3</div><span>Estimate</span></div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     STEP 1 — Client Info
+═══════════════════════════════════════════════ -->
+<div class="page active" id="page1">
+  <div class="wrap"><div class="cols center">
+    <div>
+      <div class="card">
+        <div class="card-h">Client Information</div>
+        <div class="row2">
+          <div class="field"><label class="field-label">Client / Company Name</label>
+            <input type="text" id="f_client" placeholder="e.g. CruiseDirect" /></div>
+          <div class="field"><label class="field-label">Propellic Rep</label>
+            <input type="text" id="f_rep" placeholder="e.g. Shannon Dwyer" /></div>
+        </div>
+        <div class="row2">
+          <div class="field"><label class="field-label">Scope Date</label>
+            <input type="date" id="f_date" /></div>
+          <div class="field"><label class="field-label">Hourly Rate ($/hr)</label>
+            <input type="number" id="f_rate" value="175" min="50" max="1000" /></div>
+        </div>
+        <div class="field"><label class="field-label">Internal Notes (optional — won't appear in client-facing output)</label>
+          <textarea id="f_notes" placeholder="e.g. Client uses FareHarbor, technical team is small, decision maker is the CEO..."></textarea>
+        </div>
+        <div class="btn-row right">
+          <button class="btn btn-blue" onclick="goTo(2)">Continue to Intake →</button>
+        </div>
+      </div>
+    </div>
+  </div></div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     STEP 2 — Intake Form
+═══════════════════════════════════════════════ -->
+<div class="page" id="page2">
+  <div class="wrap"><div class="cols">
+
+    <!-- Left: questions -->
+    <div>
+      <!-- Transcript importer -->
+      <div class="transcript-wrap" id="transcriptWrap">
+        <div class="transcript-header" onclick="toggleTranscript()">
+          <div class="transcript-title">📄 Import from Meeting Transcript</div>
+          <span style="font-size:0.78rem;color:var(--muted)" id="tToggleHint">Expand ▾</span>
+        </div>
+        <div class="transcript-body" id="transcriptBody">
+          <p class="status" style="margin-bottom:0.75rem">Paste a Zoom/Otter.ai transcript (WEBVTT or plain text). Claude will auto-fill the form and flag what's still unclear.</p>
+          <div class="api-row">
+            <input type="password" id="f_apikey" placeholder="Anthropic API key (sk-ant-...)" />
+            <button class="btn btn-ghost btn-sm" onclick="saveKey()">Save Key</button>
+          </div>
+          <div class="field">
+            <label class="field-label">Transcript</label>
+            <textarea id="f_transcript" style="min-height:160px;font-family:monospace;font-size:0.78rem" placeholder="WEBVTT&#10;&#10;00:00:08.000 --> 00:00:10.000&#10;John: We have GA4 and use FareHarbor for bookings..."></textarea>
+          </div>
+          <div style="display:flex;align-items:center;gap:0.75rem">
+            <button class="btn btn-blue btn-sm" id="analyzeBtn" onclick="runAnalysis()">Analyze Transcript</button>
+            <span class="status" style="margin:0">Claude reads the transcript and auto-fills the form below.</span>
+          </div>
+          <div class="status" id="analyzeStatus"></div>
+        </div>
+      </div>
+
+      <!-- Questions -->
+      <div class="card" id="questionsContainer"></div>
+
+      <div class="btn-row">
+        <button class="btn btn-ghost" onclick="goTo(1)">← Back</button>
+        <button class="btn btn-blue" onclick="goTo(3)">Generate Estimate →</button>
+      </div>
+    </div>
+
+    <!-- Right: live score -->
+    <div>
+      <div class="card" style="margin-bottom:1rem">
+        <div class="score-big">
+          <div class="score-sub">Complexity Score</div>
+          <div class="score-n" id="liveScore">0</div>
+          <div id="liveTier" class="tier-pill t1">—</div>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:1rem">
+        <div class="card-h" style="font-size:0.85rem">Breakdown</div>
+        <div id="liveBreakdown"><div style="font-size:0.78rem;color:var(--muted)">Answer questions to see breakdown.</div></div>
+      </div>
+      <div class="card" style="margin-bottom:1rem">
+        <div class="card-h" style="font-size:0.85rem">Tier Reference</div>
+        <div class="tier-guide">
+          <div class="tg-row"><span class="tier-pill t1">Tier 1</span><span style="color:var(--muted)">Basic QA · ≤12 pts · 3–8 hrs</span></div>
+          <div class="tg-row"><span class="tier-pill t2">Tier 2</span><span style="color:var(--muted)">Standard · 13–30 pts · 8–20 hrs</span></div>
+          <div class="tg-row"><span class="tier-pill t3">Tier 3</span><span style="color:var(--muted)">Full Attribution · 31+ pts · 20–50+ hrs</span></div>
+        </div>
+      </div>
+      <div class="card" id="gapsSideCard" style="display:none">
+        <div class="card-h" style="font-size:0.85rem;color:var(--amber)">⚠ Open Gaps</div>
+        <div id="gapsSide" style="font-size:0.78rem"></div>
+      </div>
+    </div>
+
+  </div></div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     STEP 3 — Estimate
+═══════════════════════════════════════════════ -->
+<div class="page" id="page3">
+  <div class="wrap"><div class="cols">
+
+    <div>
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.1rem">
+          <div class="card-h" style="margin:0" id="estTitle">Scope Estimate</div>
+          <div id="estTierPill" class="tier-pill t1">—</div>
+        </div>
+
+        <div class="est-meta">
+          <div class="est-stat"><div class="est-stat-label">Complexity Score</div><div class="est-stat-val" id="estScore">0</div></div>
+          <div class="est-stat"><div class="est-stat-label">Tier</div><div style="font-size:1rem;font-weight:600;color:var(--text);margin-top:0.3rem" id="estTierName">—</div></div>
+        </div>
+
+        <div class="section-sep">Estimated Hours <span style="font-weight:400;text-transform:none;letter-spacing:0">(adjust if needed)</span></div>
+        <div class="hrs-row" style="margin-bottom:1rem">
+          <input type="number" id="e_hmin" min="1" max="500" value="3" onchange="refreshCost()" />
+          <span style="color:var(--muted)">–</span>
+          <input type="number" id="e_hmax" min="1" max="500" value="8" onchange="refreshCost()" />
+          <span style="color:var(--muted);font-size:0.85rem">hrs</span>
+        </div>
+        <div class="override-banner" id="overrideBanner">
+          <strong>Hours adjusted from model default.</strong> Add a note explaining the override in your summary.
+        </div>
+
+        <div class="section-sep">Estimated Cost <span id="rateLabel" style="font-weight:400;text-transform:none;letter-spacing:0">(at $175/hr)</span></div>
+        <div class="cost-display" id="costDisplay" style="margin-bottom:1rem">$—</div>
+
+        <div class="section-sep">What's Included</div>
+        <ul class="bullets" id="estBullets" style="margin-bottom:0.5rem"></ul>
+      </div>
+
+      <div class="card" id="gapsCard" style="display:none">
+        <div class="card-h" style="color:var(--amber)">⚠ Open Gaps — Resolve Before Finalizing</div>
+        <div id="gapsList"></div>
+      </div>
+
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.9rem">
+          <div class="card-h" style="margin:0">Output</div>
+          <div style="display:flex;gap:0.5rem">
+            <button class="btn btn-ghost btn-sm" onclick="copySummary()">📋 Copy Summary</button>
+            <button class="btn btn-ghost btn-sm" onclick="exportJSON()">📤 Export JSON</button>
+          </div>
+        </div>
+        <div class="output-box" id="summaryBox"></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="card" style="margin-bottom:1rem">
+        <div class="card-h" style="font-size:0.85rem">Score Breakdown</div>
+        <div id="estBreakdown"><div style="font-size:0.78rem;color:var(--muted)">No scored answers.</div></div>
+      </div>
+      <div class="card" style="margin-bottom:1rem">
+        <div class="card-h" style="font-size:0.85rem">Client Answers</div>
+        <div id="estAnswers" style="font-size:0.78rem;color:var(--muted)">None recorded.</div>
+      </div>
+      <button class="btn btn-ghost" style="width:100%" onclick="goTo(2)">← Revise Intake</button>
+    </div>
+
+  </div></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// QUESTIONS DATA
+// ═══════════════════════════════════════════════════════════
+const QS = [
+  { id:'q1', type:'check',
+    internal: 'What are you trying to accomplish?',
+    client:   'What are you hoping to get out of this engagement?',
+    hint: 'Select all that apply.',
+    opts: [
+      { l:'Confirm tracking is working correctly (QA)', s:1 },
+      { l:'Fix something broken or inconsistent', s:2 },
+      { l:'Improve visibility into marketing performance', s:2 },
+      { l:'Connect leads or revenue back to campaigns', s:3 },
+      { l:'Prepare to scale paid media', s:2 },
+      { l:'Other', s:1 },
+    ]
+  },
+  { id:'q2', type:'check',
+    internal: 'How do you capture leads and inquiries?',
+    client:   'How do potential customers reach out or show interest?',
+    hint: 'Actions where a user shows interest but no money has changed hands yet. Select all that apply.',
+    opts: [
+      { l:'Form submissions (contact forms, gated content)', s:1 },
+      { l:'Consultations, demos, or calendar bookings', s:1 },
+      { l:'Direct phone calls', s:1 },
+      { l:'Live chat (Intercom, Drift, Olark, etc.)', s:1 },
+      { l:'Quote or proposal requests', s:1 },
+      { l:'Other', s:1 },
+    ]
+  },
+  { id:'q3', type:'check',
+    internal: 'Where do actual purchases or bookings happen?',
+    client:   'Where does the final purchase or booking take place?',
+    hint: 'These are your core revenue events. Select all that apply.',
+    opts: [
+      { l:'Directly on our main website (standard e-commerce checkout)', s:0 },
+      { l:'Through a third-party booking engine (FareHarbor, Mindbody, Shopify, Peek, etc.)', s:2 },
+      { l:'Offline or delayed (invoiced later, closed via sales team / CRM)', s:3 },
+      { l:'Not sure', s:1 },
+    ]
+  },
+  { id:'q4', type:'radio',
+    internal: 'When do conversions typically happen?',
+    client:   'How quickly do customers typically purchase after visiting your site?',
+    hint: 'Select the best fit.',
+    opts: [
+      { l:'Immediately (same visit / session)', s:0 },
+      { l:'Often days or weeks later (multi-touch)', s:2 },
+      { l:'Offline or via a separate system', s:3 },
+      { l:'Not sure', s:1 },
+    ]
+  },
+  { id:'q5', type:'radio',
+    internal: 'Does one visit often include multiple distinct conversion actions?',
+    client:   'Can a single visit include more than one type of conversion (e.g., booking + newsletter signup)?',
+    hint: 'e.g., a user books AND signs up for email in one session.',
+    opts: [
+      { l:'No — there\'s typically one main conversion', s:0 },
+      { l:'Yes — multiple things can be tracked', s:1 },
+      { l:'Not sure', s:1 },
+    ]
+  },
+  { id:'q6', type:'check',
+    internal: 'Do customers leave your main website before converting?',
+    client:   'Do customers end up on a different website or tool before they complete their purchase?',
+    hint: 'Select all that apply.',
+    opts: [
+      { l:'No — conversion happens on the same domain', s:0 },
+      { l:'Yes — subdomain (e.g., book.example.com)', s:1 },
+      { l:'Yes — separate domain entirely', s:2 },
+      { l:'Yes — landing pages (Unbounce, Webflow, etc.)', s:2 },
+      { l:'Yes — embedded tool / iframe (booking widget, form, etc.)', s:2 },
+      { l:'Yes — redirects happen between steps', s:2 },
+      { l:'Not sure', s:1 },
+    ]
+  },
+  { id:'q7', type:'check',
+    internal: 'Which tools and platforms are currently in use?',
+    client:   'Which of the following tools does your team currently use?',
+    hint: 'Select all that apply.',
+    groups: [
+      { label:'Measurement & Tagging', opts:[
+        { l:'Google Analytics 4 (GA4)', s:0.5 },
+        { l:'Google Tag Manager (GTM)', s:0.5 },
+        { l:'Product analytics (PostHog, Mixpanel, Heap, etc.)', s:1 },
+      ]},
+      { label:'Ad Platforms', opts:[
+        { l:'Google Ads', s:0.5 },
+        { l:'Meta (Facebook / Instagram Ads)', s:0.5 },
+        { l:'Other ad platform (LinkedIn, TikTok, Pinterest, etc.)', s:1 },
+      ]},
+      { label:'Funnels & Systems', opts:[
+        { l:'Landing pages (Unbounce, Webflow, etc.)', s:1 },
+        { l:'CRM (HubSpot, Salesforce, Zoho, etc.)', s:1.5 },
+        { l:'Email / marketing automation (Klaviyo, Pardot, ActiveCampaign, etc.)', s:1 },
+        { l:'Booking engine / backend system (FareHarbor, Peek, custom, etc.)', s:2 },
+      ]},
+      { label:'Privacy & Infrastructure', opts:[
+        { l:'Consent / cookie banner (Cookiebot, OneTrust, etc.)', s:0.5 },
+        { l:'Server-side tracking (sGTM, Stape, etc.)', s:2 },
+      ]},
+    ]
+  },
+  { id:'q8', type:'radio',
+    internal: 'What is the current state of your GA4 setup?',
+    client:   'How would you describe your Google Analytics 4 situation?',
+    opts: [
+      { l:'Installed and we believe it\'s working correctly', s:0 },
+      { l:'Installed but we\'re not confident it\'s accurate', s:2 },
+      { l:'Not installed / we don\'t use GA4', s:3 },
+      { l:'Not sure', s:2 },
+    ]
+  },
+  { id:'q9', type:'radio',
+    internal: 'What level of access does your team have to GA4?',
+    client:   'What is your team\'s current access level in Google Analytics?',
+    opts: [
+      { l:'Full admin / editor access', s:0 },
+      { l:'View-only access', s:1 },
+      { l:'We don\'t have direct access', s:2 },
+      { l:'Not sure', s:1 },
+    ]
+  },
+  { id:'q10', type:'radio',
+    internal: 'What is the current state of Google Tag Manager on your site?',
+    client:   'Do you use Google Tag Manager (GTM) on your site?',
+    opts: [
+      { l:'Installed and working correctly', s:0 },
+      { l:'Installed but we\'re unsure of its state', s:1 },
+      { l:'Not installed', s:2 },
+      { l:'Not sure', s:2 },
+    ]
+  },
+  { id:'q11', type:'radio',
+    internal: 'Do you have a consent / cookie management platform in place?',
+    client:   'Do you have a cookie consent banner or privacy management tool on your site?',
+    opts: [
+      { l:'Yes, and it\'s working correctly', s:0 },
+      { l:'Yes, but not sure it\'s set up correctly', s:1 },
+      { l:'No consent tool in place', s:1 },
+      { l:'Not sure', s:1 },
+    ]
+  },
+  { id:'q12', type:'radio',
+    internal: 'Who can publish tracking changes to your site?',
+    client:   'Who has the ability to make technical changes to your website?',
+    opts: [
+      { l:'Propellic can be given access to publish directly', s:0 },
+      { l:'Our team must review and publish changes', s:1 },
+      { l:'Changes require a developer or a dev cycle', s:2 },
+      { l:'Not sure', s:1 },
+    ]
+  },
+];
+
+const TIERS = [
+  { name:'Basic QA',              cls:'t1', min:0,  max:12,       hMin:3,  hMax:8,
+    bullets:['GA4 event and conversion tag audit','GTM container review and QA','Tag verification across key pages','Summary report with findings and recommendations'] },
+  { name:'Standard Attribution',  cls:'t2', min:13, max:30,       hMin:8,  hMax:20,
+    bullets:['Everything in Basic QA','Multi-platform tracking setup or repair (GA4, Google Ads, Meta)','Lead capture event configuration','Cross-subdomain or landing page tracking resolution','Reporting dashboard setup','Kickoff and results call'] },
+  { name:'Full Attribution & Revenue', cls:'t3', min:31, max:Infinity, hMin:20, hMax:50,
+    bullets:['Everything in Standard Attribution','Third-party booking engine / iframe tracking','CRM or offline conversion integration','Multi-touch attribution setup','Server-side tracking or consent layer configuration','Custom data layer specification and implementation','Ongoing QA documentation and handoff'] },
+];
+
+// ═══════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════
+let mode = 'internal';   // 'internal' | 'client'
+let answers = {};        // { q1:[0,2], q4:[1], q7:['g0o1','g2o3'], ... }
+let gaps = [];
+let defHMin, defHMax;
+let transcriptOpen = false;
+
+// ═══════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('f_date').value = new Date().toISOString().split('T')[0];
+  const saved = localStorage.getItem('pp_apikey');
+  if (saved) document.getElementById('f_apikey').value = saved;
+  buildForm();
+});
+
+// ═══════════════════════════════════════════════════════════
+// MODE
+// ═══════════════════════════════════════════════════════════
+function setMode(m) {
+  mode = m;
+  document.getElementById('modeInternal').classList.toggle('active', m === 'internal');
+  document.getElementById('modeClient').classList.toggle('active', m === 'client');
+  document.getElementById('transcriptWrap').style.display = m === 'internal' ? 'block' : 'none';
+  buildForm();
+}
+
+// ═══════════════════════════════════════════════════════════
+// FORM BUILDER
+// ═══════════════════════════════════════════════════════════
+function buildForm() {
+  const wrap = document.getElementById('questionsContainer');
+  wrap.innerHTML = '';
+  QS.forEach((q, qi) => {
+    const block = document.createElement('div');
+    block.className = 'q-block';
+    block.id = 'qb_' + q.id;
+    const qLabel = mode === 'client' ? q.client : q.internal;
+    let h = `<div class="q-num">Question ${qi+1} of ${QS.length}</div>
+              <div class="q-text">${qLabel}</div>`;
+    if (q.hint) h += `<div class="q-hint">${q.hint}</div>`;
+    h += `<div class="opts" id="opts_${q.id}">`;
+
+    if (q.groups) {
+      q.groups.forEach((g, gi) => {
+        h += `<div class="q-group-label">${g.label}</div>`;
+        g.opts.forEach((o, oi) => {
+          const key = `g${gi}o${oi}`;
+          const checked = (answers[q.id] || []).includes(key);
+          h += optHTML(q.id, 'check', key, o.l, checked);
+        });
+      });
+    } else {
+      q.opts.forEach((o, oi) => {
+        const checked = (answers[q.id] || []).includes(String(oi));
+        h += optHTML(q.id, q.type, String(oi), o.l, checked);
+      });
+    }
+
+    h += `</div>`;
+    block.innerHTML = h;
+    wrap.appendChild(block);
+  });
+}
+
+function optHTML(qid, type, val, label, checked) {
+  const inputType = type === 'radio' ? 'radio' : 'checkbox';
+  const checkedAttr = checked ? 'checked' : '';
+  const selectedClass = checked ? 'selected' : '';
+  return `<label class="opt ${selectedClass}" onclick="handleOpt(event,'${qid}','${val}','${type}')">
+    <input type="${inputType}" name="${qid}" value="${val}" ${checkedAttr} onclick="event.stopPropagation()" onchange="handleChange('${qid}','${val}','${type}',this.checked)" />
+    <span>${label}</span>
+  </label>`;
+}
+
+function handleOpt(e, qid, val, type) {
+  // Toggle via label click — find the checkbox inside
+  const lbl = e.currentTarget;
+  const inp = lbl.querySelector('input');
+  if (!inp || e.target === inp) return; // native input click handled by onchange
+  if (type === 'radio') {
+    inp.checked = true;
+  } else {
+    inp.checked = !inp.checked;
+  }
+  handleChange(qid, val, type, inp.checked);
+}
+
+function handleChange(qid, val, type, checked) {
+  if (type === 'radio') {
+    answers[qid] = [val];
+    // Deselect other opts visually
+    document.querySelectorAll(`#opts_${qid} .opt`).forEach(lbl => {
+      const inp = lbl.querySelector('input');
+      lbl.classList.toggle('selected', inp && inp.value === val);
+    });
+  } else {
+    if (!answers[qid]) answers[qid] = [];
+    if (checked) { if (!answers[qid].includes(val)) answers[qid].push(val); }
+    else { answers[qid] = answers[qid].filter(v => v !== val); }
+    // Update visual
+    document.querySelectorAll(`#opts_${qid} .opt`).forEach(lbl => {
+      const inp = lbl.querySelector('input');
+      if (inp && inp.value === val) lbl.classList.toggle('selected', checked);
+    });
+  }
+  updateScore();
+}
+
+// ═══════════════════════════════════════════════════════════
+// SCORING
+// ═══════════════════════════════════════════════════════════
+function score() {
+  let total = 0;
+  const bd = [];
+  QS.forEach((q, qi) => {
+    const ans = answers[q.id] || [];
+    if (!ans.length) return;
+    let qs = 0;
+    if (q.groups) {
+      q.groups.forEach((g, gi) => g.opts.forEach((o, oi) => {
+        if (ans.includes(`g${gi}o${oi}`)) qs += o.s;
+      }));
+      qs = Math.min(qs, 6); // cap tool stack at 6
+    } else {
+      ans.forEach(a => { const idx = parseInt(a); if (!isNaN(idx) && q.opts[idx]) qs += q.opts[idx].s; });
+    }
+    if (qs > 0) {
+      bd.push({ label: `Q${qi+1}`, text: (mode==='internal'?q.internal:q.client).substring(0,38)+'…', s: Math.round(qs*10)/10 });
+      total += qs;
+    }
+  });
+  return { total: Math.round(total*10)/10, bd };
+}
+
+function tier(s) { return TIERS.find(t => s >= t.min && s <= t.max) || TIERS[0]; }
+
+function updateScore() {
+  const { total, bd } = score();
+  const t = tier(total);
+  document.getElementById('liveScore').textContent = total;
+  const pill = document.getElementById('liveTier');
+  pill.textContent = t.name; pill.className = `tier-pill ${t.cls}`;
+  const bdEl = document.getElementById('liveBreakdown');
+  if (!bd.length) { bdEl.innerHTML = '<div style="font-size:0.78rem;color:var(--muted)">Answer questions to see breakdown.</div>'; return; }
+  bdEl.innerHTML = bd.map(r => `<div class="breakdown-row"><span>${r.label} · ${r.text}</span><span class="val">+${r.s}</span></div>`).join('');
+}
+
+// ═══════════════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════════════
+function goTo(n) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(`page${n}`).classList.add('active');
+  ['ps1','ps2','ps3'].forEach((id, i) => {
+    const el = document.getElementById(id);
+    el.classList.remove('active','done');
+    if (i+1 < n) el.classList.add('done');
+    else if (i+1 === n) el.classList.add('active');
+  });
+  if (n === 3) buildEstimate();
+  window.scrollTo(0,0);
+}
+
+// ═══════════════════════════════════════════════════════════
+// TRANSCRIPT ANALYSIS
+// ═══════════════════════════════════════════════════════════
+function toggleTranscript() {
+  transcriptOpen = !transcriptOpen;
+  document.getElementById('transcriptBody').className = 'transcript-body' + (transcriptOpen ? ' open' : '');
+  document.getElementById('tToggleHint').textContent = transcriptOpen ? 'Collapse ▴' : 'Expand ▾';
+}
+
+function saveKey() {
+  const k = document.getElementById('f_apikey').value.trim();
+  if (k) { localStorage.setItem('pp_apikey', k); toast('API key saved'); }
+}
+
+function stripVTT(txt) {
+  return txt.split('\n')
+    .filter(l => !l.startsWith('WEBVTT') && !/^\d{2}:\d{2}:\d{2}/.test(l) && !l.includes('-->') && l.trim())
+    .join('\n');
+}
+
+async function runAnalysis() {
+  const key = document.getElementById('f_apikey').value.trim() || localStorage.getItem('pp_apikey');
+  const raw = document.getElementById('f_transcript').value.trim();
+  const statusEl = document.getElementById('analyzeStatus');
+  const btn = document.getElementById('analyzeBtn');
+
+  if (!key) { statusEl.textContent = '⚠ Enter your Anthropic API key above first.'; return; }
+  if (!raw) { statusEl.textContent = '⚠ Paste a transcript first.'; return; }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span> Analyzing…';
+  statusEl.textContent = 'Sending to Claude…';
+
+  const transcript = stripVTT(raw).substring(0, 14000);
+
+  const qList = QS.map((q, i) => {
+    let opts;
+    if (q.groups) opts = q.groups.flatMap(g => g.opts.map(o => `  - ${o.l}`)).join('\n');
+    else opts = q.opts.map(o => `  - ${o.l}`).join('\n');
+    return `Q${i+1} [${q.id}]: ${q.internal}\nOptions:\n${opts}`;
+  }).join('\n\n');
+
+  const prompt = `You are analyzing a MarTech discovery call transcript to fill out a 12-question intake form.
+
+QUESTIONS:
+${qList}
+
+TRANSCRIPT:
+${transcript}
+
+Return ONLY valid JSON. Match option labels exactly as written above. Only include questions with clear evidence from the transcript.
+
+{
+  "answers": {
+    "q1": ["exact option label"],
+    "q3": ["exact option label 1", "exact option label 2"]
+  },
+  "gaps": [
+    {
+      "questionId": "q5",
+      "questionText": "...",
+      "whyMissing": "Not discussed in the call",
+      "suggestedFollowup": "Specific question to ask the client"
+    }
+  ],
+  "notes": "1-2 sentence summary of the client MarTech situation from the transcript"
+}`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': key,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-client-side-api-key-access': 'true',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 2500,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    if (!res.ok) {
+      const e = await res.json().catch(() => ({}));
+      throw new Error(e.error?.message || `HTTP ${res.status}`);
+    }
+
+    const data = await res.json();
+    const text = data.content[0].text;
+    const match = text.match(/\{[\s\S]*\}/);
+    if (!match) throw new Error('No JSON in response');
+    const result = JSON.parse(match[0]);
+
+    applyAIAnswers(result);
+    gaps = result.gaps || [];
+    updateGapsSide();
+
+    const filled = Object.keys(result.answers || {}).length;
+    const gapCount = gaps.length;
+    statusEl.innerHTML = `✅ <strong>${filled} questions auto-filled</strong>, <strong>${gapCount} gaps flagged</strong>.${result.notes ? `<br><em style="color:var(--muted)">${result.notes}</em>` : ''}`;
+
+  } catch (err) {
+    statusEl.textContent = `❌ Error: ${err.message}`;
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = 'Analyze Transcript';
+  }
+}
+
+function applyAIAnswers(result) {
+  answers = {};
+  const aiAnswers = result.answers || {};
+
+  QS.forEach(q => {
+    const matched = aiAnswers[q.id];
+    if (!matched || !matched.length) return;
+
+    if (q.groups) {
+      q.groups.forEach((g, gi) => g.opts.forEach((o, oi) => {
+        if (matched.some(m => fuzzy(m, o.l))) {
+          const key = `g${gi}o${oi}`;
+          if (!answers[q.id]) answers[q.id] = [];
+          answers[q.id].push(key);
+        }
+      }));
+    } else {
+      q.opts.forEach((o, oi) => {
+        if (matched.some(m => fuzzy(m, o.l))) {
+          if (q.type === 'radio') answers[q.id] = [String(oi)];
+          else { if (!answers[q.id]) answers[q.id] = []; answers[q.id].push(String(oi)); }
+        }
+      });
+    }
+  });
+
+  buildForm(); // rebuild to reflect checked state
+  updateScore();
+  // Mark AI-filled opts
+  setTimeout(() => {
+    document.querySelectorAll('.opt.selected').forEach(el => el.classList.add('ai-filled'));
+  }, 50);
+}
+
+function fuzzy(a, b) {
+  const norm = s => s.toLowerCase().replace(/[^a-z0-9]/g,'');
+  const na = norm(a), nb = norm(b);
+  return na === nb || nb.startsWith(na.substring(0, Math.min(na.length, 20))) || na.startsWith(nb.substring(0, Math.min(nb.length, 20)));
+}
+
+function updateGapsSide() {
+  const card = document.getElementById('gapsSideCard');
+  const el = document.getElementById('gapsSide');
+  if (!gaps.length) { card.style.display = 'none'; return; }
+  card.style.display = 'block';
+  el.innerHTML = gaps.map(g => `
+    <div style="margin-bottom:0.5rem;padding-bottom:0.5rem;border-bottom:1px solid var(--border)">
+      <div style="color:var(--amber);font-weight:600">${g.questionId?.toUpperCase()}</div>
+      <div style="color:var(--muted);margin-top:0.15rem">${g.suggestedFollowup || g.whyMissing}</div>
+    </div>`).join('');
+}
+
+// ═══════════════════════════════════════════════════════════
+// ESTIMATE
+// ═══════════════════════════════════════════════════════════
+function buildEstimate() {
+  const { total, bd } = score();
+  const t = tier(total);
+  const client = document.getElementById('f_client').value || 'Client';
+  const rate = parseInt(document.getElementById('f_rate').value) || 175;
+
+  document.getElementById('estTitle').textContent = `Scope Estimate — ${client}`;
+  const pill = document.getElementById('estTierPill');
+  pill.textContent = t.name; pill.className = `tier-pill ${t.cls}`;
+  document.getElementById('estScore').textContent = total;
+  document.getElementById('estTierName').textContent = t.name;
+  document.getElementById('rateLabel').textContent = `(at $${rate}/hr)`;
+
+  defHMin = t.hMin; defHMax = t.hMax;
+  document.getElementById('e_hmin').value = t.hMin;
+  document.getElementById('e_hmax').value = t.hMax;
+  document.getElementById('overrideBanner').style.display = 'none';
+
+  document.getElementById('estBullets').innerHTML = t.bullets.map(b => `<li>${b}</li>`).join('');
+  refreshCost();
+
+  // Gaps
+  if (gaps.length) {
+    document.getElementById('gapsCard').style.display = 'block';
+    document.getElementById('gapsList').innerHTML = gaps.map(g => `
+      <div class="gap-item">
+        <div class="gap-q">${g.questionId?.toUpperCase()}: ${g.questionText}</div>
+        <div class="gap-why">${g.whyMissing}</div>
+        <div class="gap-ask">💬 Ask: "${g.suggestedFollowup}"</div>
+      </div>`).join('');
+  } else {
+    document.getElementById('gapsCard').style.display = 'none';
+  }
+
+  // Score breakdown
+  const bdEl = document.getElementById('estBreakdown');
+  bdEl.innerHTML = bd.length
+    ? bd.map(r => `<div class="breakdown-row"><span>${r.label} · ${r.text}</span><span class="val">+${r.s}</span></div>`).join('')
+    : '<div style="font-size:0.78rem;color:var(--muted)">No scored answers.</div>';
+
+  // Answers summary
+  const ansEl = document.getElementById('estAnswers');
+  const lines = QS.map((q, qi) => {
+    const ans = answers[q.id] || [];
+    if (!ans.length) return null;
+    let labels;
+    if (q.groups) labels = q.groups.flatMap((g,gi) => g.opts.map((o,oi) => ans.includes(`g${gi}o${oi}`) ? o.l : null).filter(Boolean));
+    else labels = ans.map(a => q.opts[parseInt(a)]?.l).filter(Boolean);
+    return `<div style="margin-bottom:0.4rem"><strong style="color:var(--text)">Q${qi+1}:</strong> ${labels.join(', ')}</div>`;
+  }).filter(Boolean);
+  ansEl.innerHTML = lines.join('') || '<div style="color:var(--muted)">No answers recorded.</div>';
+
+  buildOutput();
+}
+
+function refreshCost() {
+  const rate = parseInt(document.getElementById('f_rate').value) || 175;
+  const hMin = parseInt(document.getElementById('e_hmin').value) || 3;
+  const hMax = parseInt(document.getElementById('e_hmax').value) || 8;
+  const cMin = hMin * rate, cMax = hMax * rate;
+  document.getElementById('costDisplay').textContent = `$${cMin.toLocaleString()} – $${cMax.toLocaleString()}`;
+  document.getElementById('overrideBanner').style.display = (hMin !== defHMin || hMax !== defHMax) ? 'block' : 'none';
+  buildOutput();
+}
+
+function buildOutput() {
+  const client = document.getElementById('f_client').value || 'Client';
+  const rep    = document.getElementById('f_rep').value   || 'Propellic';
+  const date   = document.getElementById('f_date').value  || new Date().toISOString().split('T')[0];
+  const rate   = parseInt(document.getElementById('f_rate').value) || 175;
+  const hMin   = parseInt(document.getElementById('e_hmin')?.value) || 3;
+  const hMax   = parseInt(document.getElementById('e_hmax')?.value) || 8;
+  const notes  = document.getElementById('f_notes').value;
+  const { total } = score();
+  const t = tier(total);
+
+  let out = `PROPELLIC — MARTECH ONBOARDING SCOPE ESTIMATE
+${'═'.repeat(50)}
+Client:           ${client}
+Prepared by:      ${rep}
+Date:             ${date}
+Complexity Score: ${total}
+
+TIER: ${t.name.toUpperCase()}
+Estimated Hours:  ${hMin}–${hMax} hrs
+Estimated Cost:   $${(hMin*rate).toLocaleString()} – $${(hMax*rate).toLocaleString()} (at $${rate}/hr)
+
+SCOPE INCLUDES:
+${t.bullets.map(b=>`  • ${b}`).join('\n')}
+`;
+
+  if (notes && mode === 'internal') out += `\nINTERNAL NOTES:\n  ${notes}\n`;
+
+  if (gaps.length) {
+    out += `\nOPEN GAPS — ITEMS TO RESOLVE BEFORE FINALIZING:\n`;
+    gaps.forEach(g => {
+      out += `  ⚠  ${g.questionText}\n     → Ask: "${g.suggestedFollowup}"\n\n`;
+    });
+  }
+
+  out += `\n${'—'.repeat(50)}\nGenerated by Propellic MarTech Scope Tool`;
+  const box = document.getElementById('summaryBox');
+  if (box) box.textContent = out;
+  return out;
+}
+
+function copySummary() {
+  navigator.clipboard.writeText(buildOutput()).then(() => toast('Summary copied!'));
+}
+
+function exportJSON() {
+  const client = document.getElementById('f_client').value || 'Client';
+  const rep    = document.getElementById('f_rep').value   || '';
+  const date   = document.getElementById('f_date').value;
+  const rate   = parseInt(document.getElementById('f_rate').value) || 175;
+  const hMin   = parseInt(document.getElementById('e_hmin').value);
+  const hMax   = parseInt(document.getElementById('e_hmax').value);
+  const notes  = document.getElementById('f_notes').value;
+  const { total, bd } = score();
+  const t = tier(total);
+
+  const payload = {
+    meta: { generatedAt: new Date().toISOString(), tool: 'Propellic MarTech Scope Tool v1.0' },
+    client: { name: client, propellicRep: rep, scopeDate: date, internalNotes: notes },
+    estimate: {
+      complexityScore: total, tier: t.name,
+      hoursMin: hMin, hoursMax: hMax,
+      costMin: hMin * rate, costMax: hMax * rate, hourlyRate: rate,
+      scopeBullets: t.bullets,
+    },
+    scoreBreakdown: bd,
+    rawAnswers: answers,
+    openGaps: gaps,
+  };
+
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `${client.replace(/\s+/g,'-')}-martech-scope-${date || 'draft'}.json`;
+  a.click();
+  toast('JSON exported!');
+}
+
+// ═══════════════════════════════════════════════════════════
+// UTIL
+// ═══════════════════════════════════════════════════════════
+function toast(msg, isError) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.style.background = isError ? 'var(--red)' : 'var(--green)';
+  el.classList.add('on');
+  setTimeout(() => el.classList.remove('on'), 2500);
+}
+</script>
+</body>
+</html>
